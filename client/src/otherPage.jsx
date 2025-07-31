@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 const OtherPage = () => {
   return (
     <div>
-      Other Page
-      <Link to="/">Go back home</Link>
+      <h1>Other Page</h1>
+      <Link to="/" style={{ padding: '10px' }}>Go back home</Link>
     </div>
   );
 };
