@@ -1,5 +1,5 @@
 {
-  "name": "complex",
+  "name": "worker",
   "version": "1.0.0",
   "description": "Worker for the project",
   "main": "index.js",
