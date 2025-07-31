@@ -1,0 +1,15 @@
+{
+  "name": "complex",
+  "version": "1.0.0",
+  "description": "Worker for the project",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon"
+  },
+  "dependencies": {
+    "nodemon": "^3.1.9",
+    "redis": "^4.7.0"
+  },
+  "license": "MIT"
+}
