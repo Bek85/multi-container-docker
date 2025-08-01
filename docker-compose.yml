@@ -143,10 +143,14 @@ services:
 
   # Nginx reverse proxy service
   nginx:
+    restart: always
     # Use official nginx Alpine image (lightweight)
     image: nginx:alpine
     # Set container name
     container_name: nginx
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.dev # Use development Dockerfile
     # Expose nginx port to host machine
     ports:
       - "80:80"
