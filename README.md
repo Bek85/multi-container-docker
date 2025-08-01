@@ -10,12 +10,23 @@ A full-stack application with React frontend, Node.js backend, PostgreSQL databa
 │  (React)    │◄──►│  (Node.js)  │◄──►│ (Background)│
 │   Port 5173 │    │   Port 5000 │    │             │
 └─────────────┘    └─────────────┘    └─────────────┘
-                          │                    │
-                          ▼                    ▼
-                   ┌─────────────┐    ┌─────────────┐
-                   │ PostgreSQL  │    │    Redis    │
-                   │   Port 5432 │    │   Port 6379 │
-                   └─────────────┘    └─────────────┘
+       ▲                   ▲                    │
+       │                   │                    │
+       └───────┐   ┌───────┘                    │
+               │   │                            │
+               ▼   ▼                            ▼
+         ┌─────────────┐                ┌─────────────┐
+         │    Nginx    │                │    Redis    │
+         │  (Reverse   │                │   Port 6379 │
+         │   Proxy)    │                └─────────────┘
+         │  Port 80    │
+         └─────────────┘
+               │
+               ▼
+         ┌─────────────┐
+         │ PostgreSQL  │
+         │   Port 5432 │
+         └─────────────┘
 ```
 
 ## 🚀 Quick Start
@@ -45,9 +56,11 @@ docker compose down
 complex/
 ├── docker-compose.yml          # Main orchestration file
 ├── .env                        # Environment variables
+├── default.conf                # Nginx reverse proxy configuration
 ├── client/                     # React frontend
 │   ├── Dockerfile.dev         # Frontend container config
 │   ├── package.json
+│   ├── vite.config.js         # Vite configuration
 │   └── src/
 ├── server/                     # Node.js backend
 │   ├── Dockerfile.dev         # Backend container config
@@ -75,10 +88,30 @@ server:
     context: ./server           # Build from server directory
     dockerfile: Dockerfile.dev  # Use development Dockerfile
   ports:
-    - "5000:5000"              # Host:Container port mapping
+    - "5000:5000"              # Expose for direct access and Vite proxy
   volumes:
     - ./server:/app            # Live code updates
     - /app/node_modules        # Preserve node_modules
+
+# Example: Client service
+client:
+  image: client:latest          # Custom image name
+  build:
+    context: ./client           # Build from client directory
+    dockerfile: Dockerfile.dev  # Use development Dockerfile
+  ports:
+    - "5173:5173"              # Expose Vite dev server
+  volumes:
+    - ./client:/app            # Live code updates
+    - /app/node_modules        # Preserve node_modules
+
+# Example: Nginx reverse proxy
+nginx:
+  image: nginx:alpine          # Lightweight nginx image
+  ports:
+    - "80:80"                  # Production-like entry point
+  volumes:
+    - ./default.conf:/etc/nginx/conf.d/default.conf  # Custom nginx config
 ```
 
 ### 2. Container Building Process
@@ -162,6 +195,35 @@ const pgClient = new Pool({
 });
 ```
 
+### Vite Development Proxy
+Vite provides a development proxy for API requests:
+
+```javascript
+// vite.config.js
+proxy: {
+  '/api': {
+    target: 'http://server:5000',
+    changeOrigin: true,
+    rewrite: (path) => path.replace(/^\/api/, '')  // Remove /api prefix
+  },
+}
+```
+
+### Nginx Reverse Proxy
+Nginx acts as a reverse proxy for production-like access:
+
+```nginx
+# Serve React app
+location / {
+    proxy_pass http://client:5173;
+}
+
+# Proxy API requests to server
+location /api/ {
+    proxy_pass http://server:5000/;
+}
+```
+
 ### Health Checks
 Services wait for dependencies to be healthy:
 
@@ -175,7 +237,29 @@ depends_on:
 
 ## 📊 API Endpoints
 
-### Server (Port 5000)
+### Direct Vite Access (Port 5173 - Development)
+```bash
+# Frontend application with hot reloading
+GET http://localhost:5173/
+
+# API endpoints (proxied through Vite)
+GET http://localhost:5173/api/values/all
+GET http://localhost:5173/api/values/current
+POST http://localhost:5173/api/values
+```
+
+### Nginx Proxy Access (Port 80 - Production-like)
+```bash
+# Frontend application
+GET http://localhost/
+
+# API endpoints (through nginx)
+GET http://localhost/api/values/all
+GET http://localhost/api/values/current
+POST http://localhost/api/values
+```
+
+### Direct Server Access (Port 5000 - Internal)
 ```bash
 # Get all stored values
 GET http://localhost:5000/values/all
@@ -193,19 +277,31 @@ Content-Type: application/json
 
 ### Example API Usage
 ```bash
-# Test the API
-curl http://localhost:5000
-# Response: "Hi"
+# Test the frontend (Vite development)
+curl http://localhost:5173
+# Response: HTML content
 
-# Get all values
-curl http://localhost:5000/values/all
+# Test the API through Vite proxy
+curl http://localhost:5173/api/values/all
 # Response: []
 
-# Submit a value
-curl -X POST http://localhost:5000/values \
+# Submit a value through Vite proxy
+curl -X POST http://localhost:5173/api/values \
   -H "Content-Type: application/json" \
   -d '{"index": 5}'
 # Response: {"working": true}
+
+# Test the frontend (Nginx production-like)
+curl http://localhost
+# Response: HTML content
+
+# Test the API through nginx
+curl http://localhost/api/values/all
+# Response: []
+
+# Direct server access (if needed)
+curl http://localhost:5000
+# Response: "Hi"
 ```
 
 ## 🛠️ Development Commands
@@ -335,6 +431,11 @@ REDIS_PORT=6379
 3. **Scalability**: Easy to scale individual services
 4. **Development**: Hot reloading for all services
 5. **Production Ready**: Same containers can be used in production
+6. **Flexible Access**: Choose between Vite dev server or nginx proxy
+7. **No CORS Issues**: Frontend and API served from same origin
+8. **Clean URLs**: Access everything through port 80 (nginx) or 5173 (Vite)
+9. **Development Experience**: Vite provides better debugging and hot reloading
+10. **Production Simulation**: Nginx setup mimics production deployment
 
 ## 🔗 Useful Links
 
@@ -344,3 +445,5 @@ REDIS_PORT=6379
 - [React Documentation](https://reactjs.org/docs/)
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/)
 - [Redis Documentation](https://redis.io/documentation)
+- [Nginx Documentation](https://nginx.org/en/docs/)
+- [Vite Documentation](https://vitejs.dev/guide/)

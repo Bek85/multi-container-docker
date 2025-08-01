@@ -140,3 +140,23 @@ services:
       # Redis connection settings
       REDIS_HOST: redis
       REDIS_PORT: 6379
+
+  # Nginx reverse proxy service
+  nginx:
+    # Use official nginx Alpine image (lightweight)
+    image: nginx:alpine
+    # Set container name
+    container_name: nginx
+    # Expose nginx port to host machine
+    ports:
+      - "80:80"
+    # Volume mounts for nginx configuration
+    volumes:
+      # Mount custom nginx configuration
+      - ./default.conf:/etc/nginx/conf.d/default.conf
+    # Service dependencies
+    depends_on:
+      # Wait for client to be available
+      - client
+      # Wait for server to be available
+      - server
