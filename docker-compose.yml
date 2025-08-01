@@ -51,9 +51,9 @@ services:
       # Number of retries before marking unhealthy
       retries: 5
   # Backend API server service
-  server:
+  api:
     # Custom image name for the built server
-    image: server:latest
+    image: api:latest
     # Build configuration for the server
     build:
       # Build context (directory containing Dockerfile)
@@ -61,7 +61,7 @@ services:
       # Use development Dockerfile
       dockerfile: Dockerfile.dev
     # Set container name
-    container_name: server
+    container_name: api
     # Expose server port to host machine
     ports:
       - "5000:5000"
@@ -153,10 +153,10 @@ services:
     # Volume mounts for nginx configuration
     volumes:
       # Mount custom nginx configuration
-      - ./default.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
     # Service dependencies
     depends_on:
       # Wait for client to be available
       - client
-      # Wait for server to be available
-      - server
+      # Wait for api to be available
+      - api
