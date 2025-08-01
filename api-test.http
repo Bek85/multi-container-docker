@@ -16,3 +16,15 @@ Content-Type: application/json
 ###
 
 GET http://localhost:5000/values/current
+
+
+###
+
+POST http://172.18.35.123:8000/v1/chat/completions
+Content-Type: application/json
+
+{
+  "model": "ProkuraturaAI",
+  "messages": [{"role": "user", "content": "Hello, how are you?"}],
+  "stream": false
+}
