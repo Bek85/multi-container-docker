@@ -1,81 +1,142 @@
+# Define all services for the application
 services:
+  # PostgreSQL database service
   postgres:
+    # Use official PostgreSQL 16 Alpine image (lightweight)
     image: postgres:16-alpine
+    # Set a specific container name for easy reference
     container_name: postgres
+    # Environment variables for PostgreSQL configuration
     environment:
+      # Required: PostgreSQL superuser credentials
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
+      # Application-specific database connection variables
       PGUSER: postgres
       PGPASSWORD: postgres
       PGDATABASE: postgres
       PGHOST: localhost
       PGPORT: 5432
+    # Expose PostgreSQL port to host machine
     ports:
       - "5432:5432"
+    # Health check to ensure database is ready
     healthcheck:
+      # Command to test if PostgreSQL is accepting connections
       test: ["CMD-SHELL", "pg_isready -U postgres"]
+      # Check every 5 seconds
       interval: 5s
+      # Timeout for each check
       timeout: 5s
+      # Number of retries before marking unhealthy
       retries: 5
+  # Redis cache service
   redis:
+    # Use latest Redis image
     image: redis:latest
+    # Set container name
     container_name: redis
+    # Expose Redis port to host machine
     ports:
       - "6379:6379"
+    # Health check for Redis
     healthcheck:
+      # Test Redis connectivity with ping command
       test: ["CMD", "redis-cli", "ping"]
+      # Check every 5 seconds
       interval: 5s
+      # Timeout for each check
       timeout: 5s
+      # Number of retries before marking unhealthy
       retries: 5
+  # Backend API server service
   server:
+    # Custom image name for the built server
     image: server:latest
+    # Build configuration for the server
     build:
+      # Build context (directory containing Dockerfile)
       context: ./server
+      # Use development Dockerfile
       dockerfile: Dockerfile.dev
+    # Set container name
     container_name: server
+    # Expose server port to host machine
     ports:
       - "5000:5000"
+    # Volume mounts for development (hot reloading)
     volumes:
+      # Anonymous volume for node_modules (prevents overwriting)
       - /app/node_modules
+      # Mount server code for live updates
       - ./server:/app
+    # Service dependencies with health check conditions
     depends_on:
+      # Wait for PostgreSQL to be healthy
       postgres:
         condition: service_healthy
+      # Wait for Redis to be healthy
       redis:
         condition: service_healthy
+    # Environment variables for the server
     environment:
+      # Redis connection settings
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      # PostgreSQL connection settings
       PGUSER: postgres
       PGPASSWORD: postgres
       PGDATABASE: postgres
       PGHOST: postgres
       PGPORT: 5432
 
+  # Frontend client service
   client:
+    # Custom image name for the built client
     image: client:latest
+    # Build configuration for the client
     build:
+      # Build context (directory containing Dockerfile)
       context: ./client
+      # Use development Dockerfile
       dockerfile: Dockerfile.dev
+    # Set container name
     container_name: client
+    # Expose client port to host machine (Vite default)
     ports:
       - "5173:5173"
+    # Volume mounts for development (hot reloading)
     volumes:
+      # Anonymous volume for node_modules (prevents overwriting)
       - /app/node_modules
+      # Mount client code for live updates
       - ./client:/app
+  # Background worker service
   worker:
+    # Custom image name for the built worker
     image: worker:latest
+    # Build configuration for the worker
     build:
+      # Build context (directory containing Dockerfile)
       context: ./worker
+      # Use development Dockerfile
       dockerfile: Dockerfile.dev
+    # Set container name
     container_name: worker
+    # Volume mounts for development
     volumes:
+      # Anonymous volume for node_modules (prevents overwriting)
       - /app/node_modules
+      # Mount worker code for live updates
       - ./worker:/app
+    # Service dependencies
     depends_on:
+      # Wait for Redis to be healthy
       redis:
         condition: service_healthy
+    # Environment variables for the worker
     environment:
+      # Redis connection settings
       REDIS_HOST: redis
       REDIS_PORT: 6379
