@@ -10,7 +10,7 @@ services:
   - type: web
     name: complex-api
     env: node
-    plan: free
+    plan: starter
     buildCommand: cd server && yarn install
     startCommand: cd server && yarn start
     envVars:
@@ -35,7 +35,7 @@ services:
   - type: web
     name: complex-client
     env: static
-    plan: free
+    plan: starter
     buildCommand: cd client && yarn install && yarn build
     staticPublishPath: ./client/dist
     envVars:
