@@ -5,21 +5,24 @@ const Fib = () => {
   const [values, setValues] = useState({});
   const [index, setIndex] = useState('');
 
+  // Use environment variable for API URL, fallback to relative path for development
+  const API_BASE = __API_URL__ || '';
+
   const fetchValues = async () => {
-    const values = await fetch('/api/values/current');
+    const values = await fetch(`${API_BASE}/api/values/current`);
     const json = await values.json();
     setValues(json);
   };
 
   const fetchIndexes = async () => {
-    const seenIndexes = await fetch('/api/values/all');
+    const seenIndexes = await fetch(`${API_BASE}/api/values/all`);
     const json = await seenIndexes.json();
     setSeenIndexes(json);
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    await fetch('/api/values', {
+    await fetch(`${API_BASE}/api/values`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ index: index }),

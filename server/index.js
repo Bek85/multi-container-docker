@@ -1,4 +1,4 @@
-const keys = require('./keys');
+const pool = require('./keys');
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -8,26 +8,18 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// Postgres Client Setup
-const {Pool} = require('pg');
-const pgClient = new Pool({
-  user: keys.pgUser,
-  host: keys.pgHost,
-  database: keys.pgDatabase,
-  password: keys.pgPassword,
-  port: keys.pgPort,
-});
+// Postgres Client Setup - using the pool from keys.js
+const pgClient = pool;
 
 pgClient.on('error', () => console.error('Lost PG connection'));
 
 pgClient.query('CREATE TABLE IF NOT EXISTS values (number INT)')
   .catch((err) => console.error(err));
 
-
 // Redis Client Setup
 const redis = require('redis');
 const redisClient = redis.createClient({
-  url: `redis://${keys.redisHost}:${keys.redisPort}`
+  url: `redis://${process.env.REDIS_HOST || 'redis'}:${process.env.REDIS_PORT || 6379}`
 });
 
 const redisPublisher = redisClient.duplicate();
@@ -94,6 +86,8 @@ app.post('/values', async (req, res) => {
   }
 });
 
-app.listen(5000, () => {
-  console.log('Listening on port 5000');
+// Use PORT from environment variable for Render.com
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Listening on port ${PORT}`);
 });

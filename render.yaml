@@ -1,0 +1,49 @@
+services:
+  # Backend API service
+  - type: web
+    name: complex-api
+    env: node
+    plan: free
+    buildCommand: cd server && yarn install
+    startCommand: cd server && yarn start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: REDIS_HOST
+        value: complex-redis
+      - key: REDIS_PORT
+        value: 6379
+      - key: PGUSER
+        value: postgres
+      - key: PGPASSWORD
+        sync: false
+      - key: PGDATABASE
+        value: postgres
+      - key: PGHOST
+        value: complex-postgres
+      - key: PGPORT
+        value: 5432
+
+  # Frontend static site
+  - type: web
+    name: complex-client
+    env: static
+    plan: free
+    buildCommand: cd client && yarn install && yarn build
+    staticPublishPath: ./client/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://complex-api.onrender.com
+
+  # PostgreSQL database
+  - type: pserv
+    name: complex-postgres
+    env: postgresql
+    plan: free
+    ipAllowList: []
+
+  # Redis cache
+  - type: redis
+    name: complex-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru

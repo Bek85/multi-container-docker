@@ -15,4 +15,13 @@ export default defineConfig({
       },
     },
   },
+  // Build configuration for production
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+  },
+  // Environment variables
+  define: {
+    __API_URL__: JSON.stringify(process.env.VITE_API_URL || 'http://localhost:5000'),
+  },
 })
