@@ -1,15 +1,10 @@
 services:
-  # PostgreSQL database (must be created first)
-  - type: pserv
-    name: complex-postgres
-    env: postgresql
-    plan: free
-
   # Redis cache
   - type: redis
     name: complex-redis
     plan: free
     maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
 
   # Backend API service
   - type: web
@@ -28,14 +23,11 @@ services:
       - key: PGUSER
         value: postgres
       - key: PGPASSWORD
-        fromService:
-          type: pserv
-          name: complex-postgres
-          property: password
+        sync: false
       - key: PGDATABASE
         value: postgres
       - key: PGHOST
-        value: complex-postgres
+        sync: false
       - key: PGPORT
         value: 5432
 
