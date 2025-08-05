@@ -1,4 +1,17 @@
 services:
+  # PostgreSQL database (must be created first)
+  - type: pserv
+    name: complex-postgres
+    env: postgresql
+    plan: free
+    ipAllowList: []
+
+  # Redis cache
+  - type: redis
+    name: complex-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru
+
   # Backend API service
   - type: web
     name: complex-api
@@ -16,7 +29,10 @@ services:
       - key: PGUSER
         value: postgres
       - key: PGPASSWORD
-        sync: false
+        fromService:
+          type: pserv
+          name: complex-postgres
+          property: password
       - key: PGDATABASE
         value: postgres
       - key: PGHOST
@@ -34,16 +50,3 @@ services:
     envVars:
       - key: VITE_API_URL
         value: https://complex-api.onrender.com
-
-  # PostgreSQL database
-  - type: pserv
-    name: complex-postgres
-    env: postgresql
-    plan: free
-    ipAllowList: []
-
-  # Redis cache
-  - type: redis
-    name: complex-redis
-    plan: free
-    maxmemoryPolicy: allkeys-lru

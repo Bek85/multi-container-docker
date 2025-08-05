@@ -1,0 +1,37 @@
+services:
+  # Single container deployment with both frontend and backend
+  - type: web
+    name: complex-app
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: REDIS_HOST
+        value: complex-redis
+      - key: REDIS_PORT
+        value: 6379
+      - key: PGUSER
+        value: postgres
+      - key: PGPASSWORD
+        sync: false
+      - key: PGDATABASE
+        value: postgres
+      - key: PGHOST
+        value: complex-postgres
+      - key: PGPORT
+        value: 5432
+
+  # PostgreSQL database
+  - type: pserv
+    name: complex-postgres
+    env: postgresql
+    plan: free
+    ipAllowList: []
+
+  # Redis cache
+  - type: redis
+    name: complex-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru
