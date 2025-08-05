@@ -4,7 +4,6 @@ services:
     name: complex-postgres
     env: postgresql
     plan: free
-    ipAllowList: []
 
   # Redis cache
   - type: redis
